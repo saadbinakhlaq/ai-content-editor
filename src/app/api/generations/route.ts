@@ -25,9 +25,10 @@ export async function POST(request: NextRequest) {
         durationTargetSec: input.durationTargetSec,
         imageCount: input.imageCount,
         voice: input.voice,
+        status: "QUEUED",
         jobs: {
           create: {
-            type: "GENERATE_SCRIPT",
+            type: "GENERATE_CONTENT",
             status: "QUEUED",
           },
         },
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     });
 
     await generationQueue.add(
-      "generate-script",
+      "generate-content",
       { generationRunId: generationRun.id },
       {
         jobId: generationRun.id,
@@ -43,6 +44,8 @@ export async function POST(request: NextRequest) {
         removeOnFail: 100,
       },
     );
+
+    console.log("Enqueued generation job", generationRun.id);
 
     return NextResponse.json(
       {

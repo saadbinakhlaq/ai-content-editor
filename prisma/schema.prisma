@@ -8,7 +8,8 @@ datasource db {
 
 enum GenerationStatus {
   QUEUED
-  PROCESSING
+  PROCESSING_TEXT
+  PROCESSING_IMAGES
   COMPLETED
   FAILED
 }
@@ -18,6 +19,10 @@ enum JobStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum AssetType {
+  IMAGE
 }
 
 model GenerationRun {
@@ -35,6 +40,7 @@ model GenerationRun {
 
   script Script?
   jobs   Job[]
+  assets Asset[]
 }
 
 model Script {
@@ -62,8 +68,26 @@ model Scene {
   updatedAt   DateTime @updatedAt
 
   script Script @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  assets Asset[]
 
   @@unique([scriptId, sceneNumber])
+}
+
+model Asset {
+  id              String    @id @default(cuid())
+  generationRunId String
+  sceneId         String?
+  type            AssetType
+  storagePath     String
+  publicUrl       String
+  mimeType        String    @default("image/png")
+  createdAt       DateTime  @default(now())
+
+  generationRun GenerationRun @relation(fields: [generationRunId], references: [id], onDelete: Cascade)
+  scene         Scene?         @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  @@index([generationRunId, type])
+  @@index([sceneId])
 }
 
 model Job {

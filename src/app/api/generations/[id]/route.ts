@@ -16,6 +16,11 @@ export async function GET(_request: NextRequest, context: RouteContext) {
           include: {
             scenes: {
               orderBy: { sceneNumber: "asc" },
+              include: {
+                assets: {
+                  orderBy: { createdAt: "asc" },
+                },
+              },
             },
           },
         },

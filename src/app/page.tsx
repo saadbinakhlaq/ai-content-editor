@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 
+type Asset = {
+  id: string;
+  type: "IMAGE";
+  publicUrl: string;
+  mimeType: string;
+};
+
 type Scene = {
   id: string;
   sceneNumber: number;
   narration: string;
   imagePrompt: string;
+  assets: Asset[];
 };
 
 type Script = {
@@ -20,7 +28,12 @@ type Script = {
 
 type GenerationRun = {
   id: string;
-  status: "QUEUED" | "PROCESSING" | "COMPLETED" | "FAILED";
+  status:
+    | "QUEUED"
+    | "PROCESSING_TEXT"
+    | "PROCESSING_IMAGES"
+    | "COMPLETED"
+    | "FAILED";
   prompt: string;
   errorMessage: string | null;
   script: Script | null;
@@ -91,14 +104,13 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="mx-auto max-w-4xl px-6 py-16">
+      <div className="mx-auto max-w-6xl px-6 py-16">
         <div className="mb-10">
           <h1 className="text-4xl font-semibold tracking-tight">
             AI Content Studio
           </h1>
           <p className="mt-3 text-zinc-400">
-            Generate a structured short-video script first. Voice and images come
-            next.
+            Generate a script first, then scene images.
           </p>
         </div>
 
@@ -131,7 +143,7 @@ export default function HomePage() {
             disabled={loading}
             className="rounded-xl bg-white px-5 py-3 font-medium text-black disabled:opacity-50"
           >
-            {loading ? "Generating..." : "Generate script"}
+            {loading ? "Generating..." : "Generate content"}
           </button>
         </form>
 
@@ -170,21 +182,43 @@ export default function HomePage() {
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
                   <div className="text-sm text-zinc-400">Scenes</div>
-                  <div className="mt-4 space-y-4">
-                    {generation.script.scenes.map((scene) => (
-                      <div
-                        key={scene.id}
-                        className="rounded-xl border border-zinc-800 bg-zinc-950 p-4"
-                      >
-                        <div className="font-medium">Scene {scene.sceneNumber}</div>
-                        <div className="mt-3 text-sm text-zinc-400">Narration</div>
-                        <p className="mt-1">{scene.narration}</p>
-                        <div className="mt-3 text-sm text-zinc-400">
-                          Image prompt
+                  <div className="mt-4 space-y-6">
+                    {generation.script.scenes.map((scene) => {
+                      const image = scene.assets[0];
+
+                      return (
+                        <div
+                          key={scene.id}
+                          className="rounded-xl border border-zinc-800 bg-zinc-950 p-4"
+                        >
+                          <div className="font-medium">Scene {scene.sceneNumber}</div>
+
+                          <div className="mt-3 text-sm text-zinc-400">Narration</div>
+                          <p className="mt-1">{scene.narration}</p>
+
+                          <div className="mt-3 text-sm text-zinc-400">
+                            Image prompt
+                          </div>
+                          <p className="mt-1">{scene.imagePrompt}</p>
+
+                          <div className="mt-4">
+                            {image ? (
+                              <img
+                                src={image.publicUrl}
+                                alt={`Scene ${scene.sceneNumber}`}
+                                className="w-full rounded-xl border border-zinc-800"
+                              />
+                            ) : (
+                              <div className="rounded-xl border border-dashed border-zinc-700 p-8 text-center text-sm text-zinc-500">
+                                {generation.status === "PROCESSING_IMAGES"
+                                  ? "Generating image..."
+                                  : "No image yet"}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <p className="mt-1">{scene.imagePrompt}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </>
