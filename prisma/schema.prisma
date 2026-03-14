@@ -1,13 +1,80 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum GenerationStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model GenerationRun {
+  id                String           @id @default(cuid())
+  prompt            String
+  style             String?
+  language          String           @default("en")
+  durationTargetSec Int              @default(30)
+  imageCount        Int              @default(4)
+  voice             String           @default("alloy")
+  status            GenerationStatus @default(QUEUED)
+  errorMessage      String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  script Script?
+  jobs   Job[]
+}
+
+model Script {
+  id              String   @id @default(cuid())
+  generationRunId String   @unique
+  title           String
+  hook            String
+  fullScript      String
+  voiceoverText   String
+  rawJson         Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  generationRun GenerationRun @relation(fields: [generationRunId], references: [id], onDelete: Cascade)
+  scenes        Scene[]
+}
+
+model Scene {
+  id          String   @id @default(cuid())
+  scriptId    String
+  sceneNumber Int
+  narration   String
+  imagePrompt String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  script Script @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+
+  @@unique([scriptId, sceneNumber])
+}
+
+model Job {
+  id              String    @id @default(cuid())
+  generationRunId String
+  type            String
+  status          JobStatus @default(QUEUED)
+  attemptCount    Int       @default(0)
+  errorMessage    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  generationRun GenerationRun @relation(fields: [generationRunId], references: [id], onDelete: Cascade)
 }

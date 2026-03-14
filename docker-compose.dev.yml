@@ -6,7 +6,7 @@ services:
     container_name: ai-content-app-dev
     env_file:
       - .env.docker
-    command: npm run dev -- --hostname 0.0.0.0
+    command: sh -lc "npx prisma generate && exec npm run dev -- --hostname 0.0.0.0"
     depends_on:
       postgres:
         condition: service_healthy
@@ -21,6 +21,8 @@ services:
       - app_node_modules:/app/node_modules
       - app_next:/app/.next
       - ./storage:/app/storage
+    stdin_open: true
+    tty: true
     restart: unless-stopped
 
   worker:
@@ -30,7 +32,7 @@ services:
     container_name: ai-content-worker-dev
     env_file:
       - .env.docker
-    command: npm run worker
+    command: sh -lc "npx prisma generate && exec npm run worker"
     depends_on:
       postgres:
         condition: service_healthy
